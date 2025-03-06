@@ -1,0 +1,64 @@
+// Basic Next.js Project Structure for Lumina Nova
+
+// 1. Initialize Next.js Project
+// Run in terminal: npx create-next-app@latest lumina-nova
+
+// 2. Install Dependencies
+// cd lumina-nova
+// npm install stripe next-auth @stripe/react-stripe-js
+
+// 3. Project Structure:
+/*
+lumina-nova/
+  |-- pages/
+      |-- index.js (Homepage)
+      |-- api/
+          |-- stripe.js (Stripe API Handler)
+  |-- components/
+  |-- styles/
+  |-- .env.local (API Keys)
+  |-- README.md
+*/
+
+// 4. Example Stripe API Route (pages/api/stripe.js)
+import { buffer } from 'micro';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    const buf = await buffer(req);
+    const sig = req.headers['stripe-signature'];
+
+    try {
+      const event = stripe.webhooks.constructEvent(
+        buf,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+      console.log('Stripe Event:', event);
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error('Webhook error:', error);
+      res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+  } else {
+    res.status(405).end();
+  }
+}
+
+// 5. Environment Variables (.env.local)
+/*
+STRIPE_SECRET_KEY=sk_test_yourkey
+STRIPE_WEBHOOK_SECRET=whsec_yourwebhooksecret
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_yourkey
+*/
+
+// 6. Deployment Instructions:
+/*
+1. Push this code to GitHub repository.
+2. Link repository to Vercel.
+3. Set up environment variables in Vercel.
+4. Deploy & test Stripe integration.
+*/
